@@ -46,6 +46,7 @@ public class XMLRPCException extends Exception {
 
     /**
      * Returns XMLRPC fault code if applicable.
+     *
      * @return fault code
      */
     public int getFaultCode() {

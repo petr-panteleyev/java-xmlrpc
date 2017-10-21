@@ -26,21 +26,21 @@
 package org.panteleyev.xmlrpc;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 final class XMLRPCParameters {
-    private final StringBuilder   paramString = new StringBuilder();
-    private final TimeZone        tz;
+    private final StringBuilder paramString = new StringBuilder();
+    private final TimeZone tz;
 
     XMLRPCParameters(TimeZone tz) {
         this.tz = tz;
     }
-    
+
     String getParametersString() {
         return paramString.toString();
     }
@@ -52,28 +52,28 @@ final class XMLRPCParameters {
 
     private String appendValue(Object value) {
         if (value instanceof String) {
-            return appendStringValue((String)value);
+            return appendStringValue((String) value);
         } else {
-            if (value instanceof HashMap) {
-                return appendStructValue((HashMap)value);
+            if (value instanceof Map) {
+                return appendStructValue((Map) value);
             } else {
-                if (value instanceof ArrayList) {
-                    return appendArrayValue((ArrayList)value);
+                if (value instanceof List) {
+                    return appendArrayValue((List) value);
                 } else {
                     if (value instanceof Boolean) {
-                        return appendBooleanValue((Boolean)value);
+                        return appendBooleanValue((Boolean) value);
                     } else {
                         if (value instanceof Integer) {
-                            return appendIntegerValue((Integer)value);
+                            return appendIntegerValue((Integer) value);
                         } else {
                             if (value instanceof Double) {
-                                return appendDoubleValue((Double)value);
+                                return appendDoubleValue((Double) value);
                             } else {
                                 if (value instanceof Date) {
-                                    return appendDateValue((Date)value);
+                                    return appendDateValue((Date) value);
                                 } else {
                                     if (value instanceof byte[]) {
-                                        return appendDataValue((byte[])value);
+                                        return appendDataValue((byte[]) value);
                                     } else {
                                         throw new RuntimeException("Unsupported parameter type");
                                     }
@@ -93,7 +93,7 @@ final class XMLRPCParameters {
     }
 
     private String appendBooleanValue(Boolean value) {
-        return "<boolean>" + ((value)? "1" : "0") + "</boolean>";
+        return "<boolean>" + ((value) ? "1" : "0") + "</boolean>";
     }
 
     private String appendIntegerValue(Integer value) {
@@ -104,26 +104,28 @@ final class XMLRPCParameters {
         return "<double>" + value.toString() + "</double>";
     }
 
-    private String appendStructValue(HashMap map) {
-        return "<struct>"
-            + map.keySet().stream()
-                    .filter(x -> x instanceof String)
-                    .map(x -> "<member><name>" + x + "</name><value>"
-                            + appendValue(map.get(x))
-                            + "</value></member>").collect(Collectors.joining(""))
-            + "</struct>";
+    private String appendStructValue(Map<Object, Object> map) {
+        return "<struct>" +
+                map.entrySet().stream()
+                        .filter(entry -> entry.getKey() instanceof String)
+                        .map(entry -> "<member><name>" + entry.getKey() + "</name><value>"
+                                + appendValue(entry.getValue())
+                                + "</value></member>").collect(Collectors.joining(""))
+                + "</struct>";
     }
 
-    private String appendArrayValue(ArrayList array) {
-        return "<array><data>"
-                + array.stream().map(x -> "<value>" + appendValue(x) + "</value>").collect(Collectors.joining(""))
+    private String appendArrayValue(List<Object> array) {
+        return "<array><data>" +
+                array.stream()
+                        .map(x -> "<value>" + appendValue(x) + "</value>")
+                        .collect(Collectors.joining(""))
                 + "</data></array>";
     }
 
     private String appendDateValue(Date date) {
         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
         f.setTimeZone(tz);
-        return "<dateTime.iso8601>" + f.format(date)+ "</dateTime.iso8601>";
+        return "<dateTime.iso8601>" + f.format(date) + "</dateTime.iso8601>";
     }
 
     private String appendDataValue(byte[] data) {

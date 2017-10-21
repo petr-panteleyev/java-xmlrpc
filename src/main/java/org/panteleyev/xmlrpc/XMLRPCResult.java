@@ -25,6 +25,14 @@
  */
 package org.panteleyev.xmlrpc;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -36,25 +44,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 /**
  * This class provides wrapper for result of XMLRPC call.
  */
 public class XMLRPCResult {
-    private static final String VALUE   = "value";
-    private static final String NAME    = "name";
-    private static final String MEMBER  = "member";
-    private static final String FAULT   = "fault";
+    private static final String VALUE = "value";
+    private static final String NAME = "name";
+    private static final String MEMBER = "member";
+    private static final String FAULT = "fault";
 
-    private TimeZone    tz;
+    private TimeZone tz;
 
     private ArrayList<Object> values = new ArrayList<>();
 
@@ -73,15 +73,6 @@ public class XMLRPCResult {
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
-
-          //  BufferedReader d = new BufferedReader(new InputStreamReader(in));
-          //  String s;
-          //  do {
-          //      s = d.readLine();
-          //      System.out.println(s);
-          //  } while (s != null);
-
-
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(in);
             parse(doc);
@@ -96,12 +87,12 @@ public class XMLRPCResult {
         // Try to get fault information
         NodeList faults = root.getElementsByTagName(FAULT);
         if (faults.getLength() != 0) {
-            NodeList vals = ((Element)faults.item(0)).getElementsByTagName(VALUE);
+            NodeList vals = ((Element) faults.item(0)).getElementsByTagName(VALUE);
             if (vals.getLength() != 0) {
-                Object value = parseValue((Element)vals.item(0));
+                Object value = parseValue(vals.item(0));
                 if (value instanceof HashMap) {
-                    int faultCode = (Integer)((HashMap)value).get("faultCode");
-                    String faultString = (String)((HashMap)value).get("faultString");
+                    int faultCode = (Integer) ((HashMap) value).get("faultCode");
+                    String faultString = (String) ((HashMap) value).get("faultString");
                     throw new XMLRPCException(faultCode, faultString);
                 } else {
                     throw new XMLRPCException("Undefined fault response");
@@ -136,29 +127,29 @@ public class XMLRPCResult {
 
             if (childName != null) {
                 switch (childName) {
-                    case "string" :
+                    case "string":
                         return text;
 
-                    case "int" :
-                    case "i4" :
+                    case "int":
+                    case "i4":
                         return Integer.parseInt(text);
 
-                    case "double" :
+                    case "double":
                         return Double.parseDouble(text);
 
-                    case "boolean" :
-                        return ("1".equals(text))? Boolean.TRUE : Boolean.FALSE;
+                    case "boolean":
+                        return ("1".equals(text)) ? Boolean.TRUE : Boolean.FALSE;
 
-                    case "base64" :
+                    case "base64":
                         return Base64.getDecoder().decode(text);
 
-                    case "struct" :
+                    case "struct":
                         return parseStruct(firstChild);
 
-                    case "array" :
+                    case "array":
                         return parseArray(firstChild);
 
-                    case "dateTime.iso8601" :
+                    case "dateTime.iso8601":
                         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
                         f.setTimeZone(tz);
                         return f.parse(text);
@@ -169,7 +160,7 @@ public class XMLRPCResult {
         return null;
     }
 
-    HashMap<String, Object> parseStruct(Node valueNode) throws ParseException {
+    Map<String, Object> parseStruct(Node valueNode) throws ParseException {
         HashMap<String, Object> res = new HashMap<>();
 
         NodeList childNodes = valueNode.getChildNodes();
@@ -199,7 +190,7 @@ public class XMLRPCResult {
         return res;
     }
 
-    ArrayList<Object> parseArray(Node valueNode) throws ParseException {
+    List<Object> parseArray(Node valueNode) throws ParseException {
         ArrayList<Object> res = new ArrayList<>();
 
         NodeList dataNodes = valueNode.getChildNodes();
@@ -218,6 +209,7 @@ public class XMLRPCResult {
 
     /**
      * Returns number of top level result values.
+     *
      * @return number of result values
      */
     public int getValueCount() {
@@ -226,6 +218,7 @@ public class XMLRPCResult {
 
     /**
      * Returns result value as string.
+     *
      * @param index index of requested value
      * @return value as string
      * @throws IllegalStateException in case of requested value is not string
@@ -233,7 +226,7 @@ public class XMLRPCResult {
     public String getStringValue(int index) {
         Object val = values.get(index);
         if (val instanceof String) {
-            return (String)val;
+            return (String) val;
         } else {
             throw new IllegalStateException();
         }
@@ -241,6 +234,7 @@ public class XMLRPCResult {
 
     /**
      * Returns result value as integer.
+     *
      * @param index index of requested value
      * @return value as integer
      * @throws IllegalStateException in case of requested value is not integer
@@ -248,7 +242,7 @@ public class XMLRPCResult {
     public Integer getIntegerValue(int index) {
         Object val = values.get(index);
         if (val instanceof Integer) {
-            return (Integer)val;
+            return (Integer) val;
         } else {
             throw new IllegalStateException();
         }
@@ -256,6 +250,7 @@ public class XMLRPCResult {
 
     /**
      * Returns result value as boolean.
+     *
      * @param index index of requested value
      * @return value as boolean
      * @throws IllegalStateException in case of requested value is not boolean
@@ -263,7 +258,7 @@ public class XMLRPCResult {
     public Boolean getBooleanValue(int index) {
         Object val = values.get(index);
         if (val instanceof Boolean) {
-            return (Boolean)val;
+            return (Boolean) val;
         } else {
             throw new IllegalStateException();
         }
@@ -271,6 +266,7 @@ public class XMLRPCResult {
 
     /**
      * Returns result value as double.
+     *
      * @param index index of requested value
      * @return value as double
      * @throws IllegalStateException in case of requested value is not double
@@ -278,7 +274,7 @@ public class XMLRPCResult {
     public Double getDoubleValue(int index) {
         Object val = values.get(index);
         if (val instanceof Double) {
-            return (Double)val;
+            return (Double) val;
         } else {
             throw new IllegalStateException();
         }
@@ -286,6 +282,7 @@ public class XMLRPCResult {
 
     /**
      * Returns result value as date.
+     *
      * @param index index of requested value
      * @return value as date
      * @throws IllegalStateException in case of requested value is not date
@@ -293,7 +290,7 @@ public class XMLRPCResult {
     public Date getDateValue(int index) {
         Object val = values.get(index);
         if (val instanceof Date) {
-            return (Date)val;
+            return (Date) val;
         } else {
             throw new IllegalStateException();
         }
@@ -301,6 +298,7 @@ public class XMLRPCResult {
 
     /**
      * Returns result value as binary data.
+     *
      * @param index index of requested value
      * @return value as binary data
      * @throws IllegalStateException in case of requested value is not binary data
@@ -308,7 +306,7 @@ public class XMLRPCResult {
     public byte[] getBinaryValue(int index) {
         Object val = values.get(index);
         if (val instanceof byte[]) {
-            return (byte[])val;
+            return (byte[]) val;
         } else {
             throw new IllegalStateException();
         }
@@ -316,6 +314,7 @@ public class XMLRPCResult {
 
     /**
      * Returns result value as array.
+     *
      * @param index index of requested value
      * @return value as array
      * @throws IllegalStateException in case of requested value is not array
@@ -323,7 +322,7 @@ public class XMLRPCResult {
     public List<Object> getArrayValue(int index) {
         Object val = values.get(index);
         if (val instanceof List) {
-            return (List)val;
+            return (List) val;
         } else {
             throw new IllegalStateException();
         }
@@ -331,14 +330,15 @@ public class XMLRPCResult {
 
     /**
      * Returns result value as struct.
+     *
      * @param index index of requested value
      * @return value as struct
      * @throws IllegalStateException in case of requested value is not struct
      */
-    public Map<String,Object> getStructValue(int index) {
+    public Map<String, Object> getStructValue(int index) {
         Object val = values.get(index);
         if (val instanceof Map) {
-            return (Map)val;
+            return (Map) val;
         } else {
             throw new IllegalStateException();
         }
@@ -346,6 +346,7 @@ public class XMLRPCResult {
 
     /**
      * Returns all result values.
+     *
      * @return result values
      */
     public List getValues() {

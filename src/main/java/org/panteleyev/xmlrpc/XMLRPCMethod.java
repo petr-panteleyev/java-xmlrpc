@@ -34,7 +34,7 @@ final class XMLRPCMethod {
         }
         this.name = name;
     }
-    
+
     public String getMethodString(XMLRPCParameters params) {
         return "<?xml version=\"1.0\"?>"
                 + "<methodCall><methodName>"
