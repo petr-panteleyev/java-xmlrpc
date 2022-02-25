@@ -1,27 +1,6 @@
 /*
- * Copyright (c) 2012, 2017, Petr Panteleyev <petr@panteleyev.org>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+  Copyright (c) Petr Panteleyev. All rights reserved.
+  Licensed under the BSD license. See LICENSE file in the project root for full license information.
  */
 package org.panteleyev.xmlrpc;
 
@@ -54,9 +33,9 @@ public class XMLRPCResult {
     private static final String MEMBER = "member";
     private static final String FAULT = "fault";
 
-    private TimeZone tz;
+    private final TimeZone tz;
 
-    private ArrayList<Object> values = new ArrayList<>();
+    private final List<Object> values = new ArrayList<>();
 
     XMLRPCResult() {
         // for unit testing purposes only
@@ -71,10 +50,10 @@ public class XMLRPCResult {
     XMLRPCResult(InputStream in, TimeZone tz) throws IOException, XMLRPCException {
         this.tz = tz;
 
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        var factory = DocumentBuilderFactory.newInstance();
         try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(in);
+            var builder = factory.newDocumentBuilder();
+            var doc = builder.parse(in);
             parse(doc);
         } catch (ParserConfigurationException | ParseException | SAXException ex) {
             throw new XMLRPCException("XML parser error", ex);
@@ -82,31 +61,31 @@ public class XMLRPCResult {
     }
 
     final void parse(Document doc) throws ParseException, XMLRPCException {
-        Element root = doc.getDocumentElement();
+        var root = doc.getDocumentElement();
 
         // Try to get fault information
         NodeList faults = root.getElementsByTagName(FAULT);
         if (faults.getLength() != 0) {
-            NodeList vals = ((Element) faults.item(0)).getElementsByTagName(VALUE);
+            var vals = ((Element) faults.item(0)).getElementsByTagName(VALUE);
             if (vals.getLength() != 0) {
                 Object value = parseValue(vals.item(0));
-                if (value instanceof HashMap) {
-                    int faultCode = (Integer) ((HashMap) value).get("faultCode");
-                    String faultString = (String) ((HashMap) value).get("faultString");
+                if (value instanceof HashMap hashMap) {
+                    int faultCode = (Integer) hashMap.get("faultCode");
+                    var faultString = (String) hashMap.get("faultString");
                     throw new XMLRPCException(faultCode, faultString);
                 } else {
                     throw new XMLRPCException("Undefined fault response");
                 }
             }
         } else {
-            NodeList params = root.getElementsByTagName("param");
+            var params = root.getElementsByTagName("param");
             for (int i = 0; i < params.getLength(); i++) {
-                Node param = params.item(i);
-                NodeList valueNodes = param.getChildNodes();
+                var param = params.item(i);
+                var valueNodes = param.getChildNodes();
                 for (int j = 0; j < valueNodes.getLength(); j++) {
-                    Node valueNode = valueNodes.item(j);
+                    var valueNode = valueNodes.item(j);
                     if (VALUE.equals(valueNode.getNodeName())) {
-                        Object v = parseValue(valueNode);
+                        var v = parseValue(valueNode);
                         if (v != null) {
                             values.add(parseValue(valueNode));
                         }
@@ -118,12 +97,12 @@ public class XMLRPCResult {
     }
 
     private Object parseValue(Node valueNode) throws ParseException {
-        NodeList children = valueNode.getChildNodes();
+        var children = valueNode.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
-            Node firstChild = children.item(i);
-            String childName = firstChild.getNodeName();
+            var firstChild = children.item(i);
+            var childName = firstChild.getNodeName();
 
-            String text = firstChild.getTextContent();
+            var text = firstChild.getTextContent();
 
             if (childName != null) {
                 switch (childName) {
@@ -150,7 +129,7 @@ public class XMLRPCResult {
                         return parseArray(firstChild);
 
                     case "dateTime.iso8601":
-                        SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
+                        var f = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
                         f.setTimeZone(tz);
                         return f.parse(text);
                 }
@@ -161,19 +140,19 @@ public class XMLRPCResult {
     }
 
     Map<String, Object> parseStruct(Node valueNode) throws ParseException {
-        HashMap<String, Object> res = new HashMap<>();
+        var res = new HashMap<String, Object>();
 
-        NodeList childNodes = valueNode.getChildNodes();
+        var childNodes = valueNode.getChildNodes();
         for (int i = 0; i < childNodes.getLength(); i++) {
-            Node child = childNodes.item(i);
-            String childName = child.getNodeName();
+            var child = childNodes.item(i);
+            var childName = child.getNodeName();
             if (MEMBER.equals(childName)) {
-                NodeList memberChildren = child.getChildNodes();
+                var memberChildren = child.getChildNodes();
 
                 String name = null;
                 Object value = null;
                 for (int j = 0; j < memberChildren.getLength(); j++) {
-                    Node memberChild = memberChildren.item(j);
+                    var memberChild = memberChildren.item(j);
                     if (NAME.equals(memberChild.getNodeName())) {
                         name = memberChild.getTextContent();
                     }
@@ -191,13 +170,13 @@ public class XMLRPCResult {
     }
 
     List<Object> parseArray(Node valueNode) throws ParseException {
-        ArrayList<Object> res = new ArrayList<>();
+        var res = new ArrayList<>();
 
-        NodeList dataNodes = valueNode.getChildNodes();
+        var dataNodes = valueNode.getChildNodes();
         if (dataNodes.getLength() > 0) {
-            NodeList elemNodes = dataNodes.item(0).getChildNodes();
+            var elemNodes = dataNodes.item(0).getChildNodes();
             for (int i = 0; i < elemNodes.getLength(); i++) {
-                Node vNode = elemNodes.item(i);
+                var vNode = elemNodes.item(i);
                 if (VALUE.equals(vNode.getNodeName())) {
                     res.add(parseValue(vNode));
                 }
@@ -224,9 +203,9 @@ public class XMLRPCResult {
      * @throws IllegalStateException in case of requested value is not string
      */
     public String getStringValue(int index) {
-        Object val = values.get(index);
-        if (val instanceof String) {
-            return (String) val;
+        var val = values.get(index);
+        if (val instanceof String stringValue) {
+            return stringValue;
         } else {
             throw new IllegalStateException();
         }
@@ -240,9 +219,9 @@ public class XMLRPCResult {
      * @throws IllegalStateException in case of requested value is not integer
      */
     public Integer getIntegerValue(int index) {
-        Object val = values.get(index);
-        if (val instanceof Integer) {
-            return (Integer) val;
+        var val = values.get(index);
+        if (val instanceof Integer intValue) {
+            return intValue;
         } else {
             throw new IllegalStateException();
         }
@@ -256,9 +235,9 @@ public class XMLRPCResult {
      * @throws IllegalStateException in case of requested value is not boolean
      */
     public Boolean getBooleanValue(int index) {
-        Object val = values.get(index);
-        if (val instanceof Boolean) {
-            return (Boolean) val;
+        var val = values.get(index);
+        if (val instanceof Boolean intValue) {
+            return intValue;
         } else {
             throw new IllegalStateException();
         }
@@ -272,9 +251,9 @@ public class XMLRPCResult {
      * @throws IllegalStateException in case of requested value is not double
      */
     public Double getDoubleValue(int index) {
-        Object val = values.get(index);
-        if (val instanceof Double) {
-            return (Double) val;
+        var val = values.get(index);
+        if (val instanceof Double intValue) {
+            return intValue;
         } else {
             throw new IllegalStateException();
         }
@@ -288,9 +267,9 @@ public class XMLRPCResult {
      * @throws IllegalStateException in case of requested value is not date
      */
     public Date getDateValue(int index) {
-        Object val = values.get(index);
-        if (val instanceof Date) {
-            return (Date) val;
+        var val = values.get(index);
+        if (val instanceof Date date) {
+            return date;
         } else {
             throw new IllegalStateException();
         }
@@ -304,9 +283,9 @@ public class XMLRPCResult {
      * @throws IllegalStateException in case of requested value is not binary data
      */
     public byte[] getBinaryValue(int index) {
-        Object val = values.get(index);
-        if (val instanceof byte[]) {
-            return (byte[]) val;
+        var val = values.get(index);
+        if (val instanceof byte[] bytes) {
+            return bytes;
         } else {
             throw new IllegalStateException();
         }
@@ -320,9 +299,9 @@ public class XMLRPCResult {
      * @throws IllegalStateException in case of requested value is not array
      */
     public List<Object> getArrayValue(int index) {
-        Object val = values.get(index);
-        if (val instanceof List) {
-            return (List) val;
+        var val = values.get(index);
+        if (val instanceof List list) {
+            return list;
         } else {
             throw new IllegalStateException();
         }
@@ -336,9 +315,9 @@ public class XMLRPCResult {
      * @throws IllegalStateException in case of requested value is not struct
      */
     public Map<String, Object> getStructValue(int index) {
-        Object val = values.get(index);
-        if (val instanceof Map) {
-            return (Map) val;
+        var val = values.get(index);
+        if (val instanceof Map map) {
+            return map;
         } else {
             throw new IllegalStateException();
         }

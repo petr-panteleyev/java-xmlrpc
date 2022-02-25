@@ -28,7 +28,7 @@
  This package provides a lightweight library to access XMLRPC services according
  to the <a href="http://xmlrpc.scripting.com/spec.html">XMLRPC Specification</a>.
 
- <h1>Data Types</h1>
+ <h2>Data Types</h2>
  <p>The following Java classes are used to represent XMLRPC data types:</p>
  <table border="1">
  <caption></caption>
@@ -43,7 +43,7 @@
  <tr><td>struct</td><td>java.util.HashMap</td></tr>
  </table>
 
- <h1>Date Representation</h1>
+ <h2>Date Representation</h2>
 
  <p>XMLRPC specification provides the following statement about timezones:<br>
  <i>Don't assume a timezone. It should be specified by the server in its
