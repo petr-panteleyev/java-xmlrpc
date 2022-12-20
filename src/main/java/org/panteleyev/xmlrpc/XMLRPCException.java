@@ -1,11 +1,11 @@
 /*
-  Copyright (c) Petr Panteleyev. All rights reserved.
-  Licensed under the BSD license. See LICENSE file in the project root for full license information.
+ Copyright © 2017-2022 Petr Panteleyev <petr@panteleyev.org>
+ SPDX-License-Identifier: BSD-2-Clause
  */
 package org.panteleyev.xmlrpc;
 
 /**
- * This class is used to provides XMLRPC error reporting.
+ * This class provides XMLRPC error reporting.
  */
 public class XMLRPCException extends Exception {
     private final int faultCode;
