@@ -1,6 +1,6 @@
 /*
-  Copyright (c) Petr Panteleyev. All rights reserved.
-  Licensed under the BSD license. See LICENSE file in the project root for full license information.
+ Copyright © 2017-2022 Petr Panteleyev <petr@panteleyev.org>
+ SPDX-License-Identifier: BSD-2-Clause
  */
 package org.panteleyev.xmlrpc;
 
@@ -9,7 +9,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import javax.xml.parsers.DocumentBuilder;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
@@ -32,6 +32,8 @@ public class XMLRPCResult {
     private static final String NAME = "name";
     private static final String MEMBER = "member";
     private static final String FAULT = "fault";
+    private static final String DATA = "data";
+    private static final String PARAM = "param";
 
     private final TimeZone tz;
 
@@ -60,16 +62,16 @@ public class XMLRPCResult {
         }
     }
 
-    final void parse(Document doc) throws ParseException, XMLRPCException {
+    final XMLRPCResult parse(Document doc) throws ParseException, XMLRPCException {
         var root = doc.getDocumentElement();
 
         // Try to get fault information
         NodeList faults = root.getElementsByTagName(FAULT);
         if (faults.getLength() != 0) {
-            var vals = ((Element) faults.item(0)).getElementsByTagName(VALUE);
-            if (vals.getLength() != 0) {
-                Object value = parseValue(vals.item(0));
-                if (value instanceof HashMap hashMap) {
+            var values = ((Element) faults.item(0)).getElementsByTagName(VALUE);
+            if (values.getLength() != 0) {
+                Object value = parseValue(values.item(0));
+                if (value instanceof HashMap<?, ?> hashMap) {
                     int faultCode = (Integer) hashMap.get("faultCode");
                     var faultString = (String) hashMap.get("faultString");
                     throw new XMLRPCException(faultCode, faultString);
@@ -78,7 +80,7 @@ public class XMLRPCResult {
                 }
             }
         } else {
-            var params = root.getElementsByTagName("param");
+            var params = root.getElementsByTagName(PARAM);
             for (int i = 0; i < params.getLength(); i++) {
                 var param = params.item(i);
                 var valueNodes = param.getChildNodes();
@@ -94,6 +96,7 @@ public class XMLRPCResult {
                 }
             }
         }
+        return this;
     }
 
     private Object parseValue(Node valueNode) throws ParseException {
@@ -104,34 +107,32 @@ public class XMLRPCResult {
 
             var text = firstChild.getTextContent();
 
-            if (childName != null) {
-                switch (childName) {
-                    case "string":
-                        return text;
-
-                    case "int":
-                    case "i4":
-                        return Integer.parseInt(text);
-
-                    case "double":
-                        return Double.parseDouble(text);
-
-                    case "boolean":
-                        return ("1".equals(text)) ? Boolean.TRUE : Boolean.FALSE;
-
-                    case "base64":
-                        return Base64.getDecoder().decode(text);
-
-                    case "struct":
-                        return parseStruct(firstChild);
-
-                    case "array":
-                        return parseArray(firstChild);
-
-                    case "dateTime.iso8601":
-                        var f = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
-                        f.setTimeZone(tz);
-                        return f.parse(text);
+            switch (childName) {
+                case "string" -> {
+                    return text;
+                }
+                case "int", "i4" -> {
+                    return Integer.parseInt(text);
+                }
+                case "double" -> {
+                    return Double.parseDouble(text);
+                }
+                case "boolean" -> {
+                    return ("1".equals(text)) ? Boolean.TRUE : Boolean.FALSE;
+                }
+                case "base64" -> {
+                    return Base64.getDecoder().decode(text);
+                }
+                case "struct" -> {
+                    return parseStruct(firstChild);
+                }
+                case "array" -> {
+                    return parseArray(firstChild);
+                }
+                case "dateTime.iso8601" -> {
+                    var f = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
+                    f.setTimeZone(tz);
+                    return f.parse(text);
                 }
             }
         }
@@ -142,29 +143,24 @@ public class XMLRPCResult {
     Map<String, Object> parseStruct(Node valueNode) throws ParseException {
         var res = new HashMap<String, Object>();
 
-        var childNodes = valueNode.getChildNodes();
-        for (int i = 0; i < childNodes.getLength(); i++) {
-            var child = childNodes.item(i);
-            var childName = child.getNodeName();
-            if (MEMBER.equals(childName)) {
-                var memberChildren = child.getChildNodes();
+        var memberElements = getChildElementsByName(valueNode, MEMBER);
+        for (var child : memberElements) {
+            var memberChildren = child.getChildNodes();
 
-                String name = null;
-                Object value = null;
-                for (int j = 0; j < memberChildren.getLength(); j++) {
-                    var memberChild = memberChildren.item(j);
-                    if (NAME.equals(memberChild.getNodeName())) {
-                        name = memberChild.getTextContent();
-                    }
-                    if (VALUE.equals(memberChild.getNodeName())) {
-                        value = parseValue(memberChild);
-                    }
+            String name = null;
+            Object value = null;
+            for (int j = 0; j < memberChildren.getLength(); j++) {
+                var memberChild = memberChildren.item(j);
+                if (NAME.equals(memberChild.getNodeName())) {
+                    name = memberChild.getTextContent();
                 }
-                if (name != null && value != null) {
-                    res.put(name, value);
+                if (VALUE.equals(memberChild.getNodeName())) {
+                    value = parseValue(memberChild);
                 }
             }
-
+            if (name != null && value != null) {
+                res.put(name, value);
+            }
         }
         return res;
     }
@@ -172,14 +168,11 @@ public class XMLRPCResult {
     List<Object> parseArray(Node valueNode) throws ParseException {
         var res = new ArrayList<>();
 
-        var dataNodes = valueNode.getChildNodes();
-        if (dataNodes.getLength() > 0) {
-            var elemNodes = dataNodes.item(0).getChildNodes();
-            for (int i = 0; i < elemNodes.getLength(); i++) {
-                var vNode = elemNodes.item(i);
-                if (VALUE.equals(vNode.getNodeName())) {
-                    res.add(parseValue(vNode));
-                }
+        var dataElements = getChildElementsByName(valueNode, DATA);
+        if (dataElements.size() == 1) {
+            var valueElements = getChildElementsByName(dataElements.get(0), VALUE);
+            for (var value : valueElements) {
+                res.add(parseValue(value));
             }
         }
 
@@ -298,9 +291,9 @@ public class XMLRPCResult {
      * @return value as array
      * @throws IllegalStateException in case of requested value is not array
      */
-    public List<Object> getArrayValue(int index) {
+    public List<?> getArrayValue(int index) {
         var val = values.get(index);
-        if (val instanceof List list) {
+        if (val instanceof List<?> list) {
             return list;
         } else {
             throw new IllegalStateException();
@@ -328,7 +321,21 @@ public class XMLRPCResult {
      *
      * @return result values
      */
-    public List getValues() {
+    public List<?> getValues() {
         return values;
+    }
+
+    private static List<Element> getChildElementsByName(Node node, String name) {
+        var nodes = node.getChildNodes();
+        var result = new ArrayList<Element>(nodes.getLength());
+        for (int i = 0; i < nodes.getLength(); i++) {
+            if (!(nodes.item(i) instanceof Element childElement)) {
+                continue;
+            }
+            if (childElement.getTagName().equals(name)) {
+                result.add(childElement);
+            }
+        }
+        return result;
     }
 }
