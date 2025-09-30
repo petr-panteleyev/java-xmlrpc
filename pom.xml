@@ -3,11 +3,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.panteleyev</groupId>
     <artifactId>xmlrpc</artifactId>
-    <version>1.0.2</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
+
     <name>XMLRPC</name>
     <description>XMLRPC Client API</description>
     <url>https://github.com/petr-panteleyev/java-xmlrpc</url>
+
     <licenses>
         <license>
             <name>The 2-Clause BSD License</name>
@@ -30,14 +32,15 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>17</maven.compiler.release>
-        <mavenCompilerPluginVersion>3.10.1</mavenCompilerPluginVersion>
-        <mavenJarPluginVersion>3.3.0</mavenJarPluginVersion>
-        <mavenSurefirePluginVersion>3.0.0-M7</mavenSurefirePluginVersion>
-        <mavenSourcePluginVersion>3.2.0</mavenSourcePluginVersion>
-        <mavenJavadocPluginVersion>3.3.2</mavenJavadocPluginVersion>
-        <nexusStagingMavenPlugin>1.6.13</nexusStagingMavenPlugin>
-        <jUnitVersion>5.9.1</jUnitVersion>
+        <maven.compiler.release>21</maven.compiler.release>
+        <mavenCompilerPluginVersion>3.14.1</mavenCompilerPluginVersion>
+        <mavenJarPluginVersion>3.4.2</mavenJarPluginVersion>
+        <mavenSurefirePluginVersion>3.5.4</mavenSurefirePluginVersion>
+        <mavenSourcePluginVersion>3.3.1</mavenSourcePluginVersion>
+        <mavenJavadocPluginVersion>3.11.3</mavenJavadocPluginVersion>
+        <nexusStagingMavenPlugin>0.7.0</nexusStagingMavenPlugin>
+        <mavenGpgPluginVersion>3.2.4</mavenGpgPluginVersion>
+        <jUnitVersion>5.13.1</jUnitVersion>
     </properties>
 
     <dependencies>
@@ -83,12 +86,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${mavenJavadocPluginVersion}</version>
-                <configuration>
-                    <notimestamp>true</notimestamp>
-                    <author>false</author>
-                    <bottom><![CDATA[Copyright &copy; 2017-2022, Petr Panteleyev]]></bottom>
-                    <additionalOptions>-html5 --release ${maven.compiler.release}</additionalOptions>
-                </configuration>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -97,11 +94,18 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <notimestamp>true</notimestamp>
+                    <author>false</author>
+                    <bottom><![CDATA[Copyright &copy; 2017-2025, Petr Panteleyev]]></bottom>
+                    <additionalOptions>--release ${maven.compiler.release}</additionalOptions>
+                    <disableNoFonts>true</disableNoFonts>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
+                <version>${mavenGpgPluginVersion}</version>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
@@ -113,16 +117,23 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
                 <version>${nexusStagingMavenPlugin}</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                    <publishingServerId>central</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                    <waitUntil>published</waitUntil>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+            <id>maven_central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+    </repositories>
 </project>

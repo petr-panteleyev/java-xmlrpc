@@ -1,11 +1,13 @@
 /*
- Copyright © 2017-2022 Petr Panteleyev <petr@panteleyev.org>
+ Copyright © 2017-2025 Petr Panteleyev
  SPDX-License-Identifier: BSD-2-Clause
  */
 package org.panteleyev.xmlrpc;
 
 /**
  * This class defines XMLRPC method.
+ *
+ * @param name name of the method
  */
 public record XMLRPCMethod(String name) {
 
@@ -15,6 +17,12 @@ public record XMLRPCMethod(String name) {
         }
     }
 
+    /**
+     * Returns XML representation of the method call.
+     *
+     * @param params call parameters
+     * @return XML for the method call
+     */
     public String getMethodString(XMLRPCParameters params) {
         return "<?xml version=\"1.0\"?>"
                 + "<methodCall><methodName>"

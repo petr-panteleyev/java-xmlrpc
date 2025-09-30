@@ -1,5 +1,5 @@
 /*
- Copyright © 2017-2022 Petr Panteleyev <petr@panteleyev.org>
+ Copyright © 2017-2025 Petr Panteleyev
  SPDX-License-Identifier: BSD-2-Clause
  */
 package org.panteleyev.xmlrpc;
@@ -39,30 +39,19 @@ public final class XMLRPCParameters {
     }
 
     private String appendValue(Object value) {
-        // TODO: replace with switch pattern matching
-        if (value instanceof String stringValue) {
-            return appendStringValue(stringValue);
-        } else if (value instanceof Map<?, ?> map) {
-            return appendStructValue(map);
-        } else if (value instanceof List<?> list) {
-            return appendArrayValue(list);
-        } else if (value instanceof Boolean booleanValue) {
-            return appendBooleanValue(booleanValue);
-        } else if (value instanceof Integer intValue) {
-            return appendIntegerValue(intValue);
-        } else if (value instanceof Double doubleValue) {
-            return appendDoubleValue(doubleValue);
-        } else if (value instanceof Date date) {
-            return appendDateValue(date);
-        } else if (value instanceof LocalDateTime localDateTime) {
-            return appendDateValue(localDateTime);
-        } else if (value instanceof LocalDate localDate) {
-            return appendDateValue(localDate);
-        } else if (value instanceof byte[] bytes) {
-            return appendDataValue(bytes);
-        } else {
-            throw new RuntimeException("Unsupported parameter type");
-        }
+        return switch (value) {
+            case String stringValue -> appendStringValue(stringValue);
+            case Map<?, ?> map -> appendStructValue(map);
+            case List<?> list -> appendArrayValue(list);
+            case Boolean booleanValue -> appendBooleanValue(booleanValue);
+            case Integer intValue -> appendIntegerValue(intValue);
+            case Double doubleValue -> appendDoubleValue(doubleValue);
+            case Date date -> appendDateValue(date);
+            case LocalDateTime localDateTime -> appendDateValue(localDateTime);
+            case LocalDate localDate -> appendDateValue(localDate);
+            case byte[] bytes -> appendDataValue(bytes);
+            case null, default -> throw new RuntimeException("Unsupported parameter type");
+        };
     }
 
     private String appendStringValue(String value) {

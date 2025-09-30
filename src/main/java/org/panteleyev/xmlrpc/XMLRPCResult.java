@@ -1,5 +1,5 @@
 /*
- Copyright © 2017-2022 Petr Panteleyev <petr@panteleyev.org>
+ Copyright © 2017-2025 Petr Panteleyev
  SPDX-License-Identifier: BSD-2-Clause
  */
 package org.panteleyev.xmlrpc;
@@ -170,7 +170,7 @@ public class XMLRPCResult {
 
         var dataElements = getChildElementsByName(valueNode, DATA);
         if (dataElements.size() == 1) {
-            var valueElements = getChildElementsByName(dataElements.get(0), VALUE);
+            var valueElements = getChildElementsByName(dataElements.getFirst(), VALUE);
             for (var value : valueElements) {
                 res.add(parseValue(value));
             }
